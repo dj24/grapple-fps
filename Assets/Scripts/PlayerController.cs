@@ -1,93 +1,172 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
+﻿using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
     Rigidbody rb;
-    float jumpHeight;
-    float walkSpeed;
-    float crouchSpeed;
-    float sprintSpeed;
-    float turnSpeed;
-    float currentSpeed;
-    Text velocityText;
+    float jumpHeight, walkSpeed, crouchSpeed, sprintSpeed, turnSpeed, currentSpeed, accel, velocity;
+    public bool forward, back, right, left, jumping, sprinting, crouching, grounded = false, sliding = false;
+    public Vector3 runDirection,yRotation,xRotation;
 
-    // Start is called before the first frame update
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        jumpHeight = 300f;
+        jumpHeight = 200f;
         walkSpeed = 5f;
         crouchSpeed = 2.5f;
         sprintSpeed = 10f;
         turnSpeed = 200f;
-        velocityText = GameObject.FindWithTag("DebugNumber").GetComponent<Text>();
-    }
-
-    void rotateCamera()
-    {
-        float yRotation = Input.GetAxis("Mouse X");
-        float xRotation = Input.GetAxis("Mouse Y");
-        if (yRotation < 0 || yRotation > 0)
-        {
-            Vector3 rotation = new Vector3(0, yRotation);
-            transform.Rotate(rotation * turnSpeed * Time.deltaTime);
-        }
-        if (xRotation < 0 || xRotation > 0)
-        {
-            Transform cam = Camera.main.transform;
-            Vector3 rotation = new Vector3(-xRotation, 0);
-            cam.Rotate(rotation * turnSpeed * Time.deltaTime);
-        }
+        accel = 10f;
     }
 
     void OnCollisionEnter(Collision collision)
     {
-        print(collision.gameObject.tag);
+        bool touchingFloor = collision.gameObject.tag == "Floor" || collision.gameObject.transform.parent.tag == "Floor";
+        if (touchingFloor && !grounded)
+        {
+            grounded = true;
+        }
+    }
 
-        // example of playing sound when hitting ground hard
-        //if (collision.relativeVelocity.magnitude > 2)
-        //    audioSource.Play();
+    void RotateCamera()
+    {
+        transform.Rotate(yRotation * turnSpeed * Time.deltaTime);
+        Camera.main.transform.Rotate(xRotation * turnSpeed * Time.deltaTime);
+    }
+
+    void UpdateRunDirection()
+    {
+        //TODO: make it so that velocity isnt preserved when changin direction
+        //maybe need to study game movement
+        Vector3 dir = new Vector3(0, 0, 0);
+
+        if (forward) dir += transform.forward;
+        if (right) dir += transform.right;
+        if (left) dir -= transform.right;
+        if (back) dir -= transform.forward;
+
+        runDirection = dir.normalized;
+    }
+
+    void UpdateVelocity()
+    {
+        velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z).magnitude;
+    }
+
+    void GetCurrentSpeed()
+    {
+        float maxSpeed = sprinting ? sprintSpeed : walkSpeed;
+
+        if (currentSpeed + accel * Time.deltaTime < maxSpeed)
+        {
+            currentSpeed += accel * Time.deltaTime;
+            return;
+        }
+        currentSpeed -= accel * Time.deltaTime;
+    }
+
+    void Accelerate()
+    {
+        GetCurrentSpeed();
+
+        rb.velocity = new Vector3(runDirection.x * currentSpeed, rb.velocity.y, runDirection.z * currentSpeed);
+    }
+
+    void Deccelerate()
+    {
+        currentSpeed = velocity;
+
+        float deccelSpeed = 5f;
+        float slideSpeed = 0.5f;
+
+        if (!grounded)
+        {
+            deccelSpeed = 1f;
+            return;
+        }
+        if (!crouching)
+        {
+            Vector3 deccelDirection = new Vector3(-rb.velocity.x, 0, -rb.velocity.z);
+            rb.AddForce(deccelDirection * deccelSpeed);
+            return;
+        }
+        if (sliding)
+        {
+            //we need to accelerate to counter act drag
+            Vector3 accelDirection = new Vector3(rb.velocity.x, 0, rb.velocity.z);
+            rb.AddForce(accelDirection * slideSpeed);
+            return;
+        }
+    }
+
+    void CheckForJump()
+    {
+        if (jumping && grounded)
+        {
+            grounded = false;
+            rb.AddForce(transform.up * jumpHeight);
+        }
+    }
+
+    void CheckForCrouch()
+    {
+        if(crouching && grounded)
+        {
+            Camera.main.transform.localPosition = new Vector3(0, 0, 0);
+            return;
+        }
+        Camera.main.transform.localPosition = new Vector3(0, 0.5f, 0);
+    }
+
+    void CheckForSlide()
+    {
+        if(crouching && sprinting && grounded)
+        {
+            sliding = true;
+            sprinting = false;
+            return;
+        }
+
+        if(velocity < 0.1f || !crouching)
+        {
+            sliding = false;
+            return;
+        }
+    }
+
+    void MoveCharacter()
+    {
+        UpdateRunDirection();
+
+        CheckForCrouch();
+
+        CheckForSlide();
+
+        CheckForJump();
+
+        bool moving = forward || back || right || left;
+
+        if (moving && !sliding)
+        {
+            Accelerate();
+            return;
+        }
+
+        Deccelerate();
+    }
+
+    void DisplayVelocity()
+    {
+        GameManager.DebugText.text = velocity.ToString();
     }
 
     void FixedUpdate()
     {
-        Vector3 xzVelocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
-        currentSpeed = xzVelocity.magnitude;
-        velocityText.text = currentSpeed.ToString();
+        UpdateVelocity();
 
-        rotateCamera();
+        DisplayVelocity();
 
-        Vector3 runDirection = new Vector3(0, 0, 0);
+        RotateCamera();
 
-        //TODO: abstract to class fields and set from input controller
-        bool forward = Input.GetKey(KeyCode.W);
-        bool back = Input.GetKey(KeyCode.S);
-        bool right = Input.GetKey(KeyCode.D);
-        bool left = Input.GetKey(KeyCode.A);
-        bool moving = forward || back || right || left;
-        bool jumping = Input.GetKeyDown(KeyCode.Space);
-
-        if (jumping) rb.AddForce(transform.up * jumpHeight);
-
-        if (currentSpeed < walkSpeed)
-        {
-            if (forward) runDirection += transform.forward;
-            if (right) runDirection += transform.right;
-            if (left) runDirection -= transform.right;
-            if (back) runDirection -= transform.forward;
-        }
-
-        if (moving)
-        {
-            rb.AddForce(runDirection * 10f);
-        }
-        else
-        {
-            Vector3 deccelDirection = new Vector3(-rb.velocity.x, 0, -rb.velocity.z);
-            rb.AddForce(deccelDirection * 10f);
-        }
+        MoveCharacter();
     }
 }
