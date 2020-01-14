@@ -5,14 +5,9 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
-    // Provides global access to core game instances.
-    // e.g GameManager.Player can be called from anywhere to retrieve player controller
+    public static GameManager Instance { get; private set; }
 
-	private static GameManager _instance;
-
-	public static GameManager Instance { get { return _instance; } }
-
-	public static PlayerController Player
+    public static PlayerController Player
 	{
 		get
 		{
@@ -30,13 +25,17 @@ public class GameManager : MonoBehaviour
 
 	private void Awake()
 	{
-		if (_instance != null && _instance != this)
+        
+        QualitySettings.vSyncCount = 0;  // VSync must be disabled
+        Application.targetFrameRate = 30;
+        
+        if (Instance != null && Instance != this)
 		{
 			Destroy(this.gameObject);
 		}
 		else
 		{
-			_instance = this;
+			Instance = this;
 		}
 	}
 }

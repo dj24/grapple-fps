@@ -4,7 +4,7 @@ public class PlayerController : MonoBehaviour
 {
     Rigidbody rb;
     float jumpHeight, walkSpeed, crouchSpeed, sprintSpeed, turnSpeed, currentSpeed, accel, velocity;
-    public bool forward, back, right, left, jumping, sprinting, crouching, grounded = false, sliding = false;
+    public bool forward, back, right, left, jumping, sprinting, crouching, grounded = false, sliding = false, grapple = false;
     public Vector3 runDirection,yRotation,xRotation;
 
     void Start()

@@ -20,5 +20,6 @@ public class InputHandler : MonoBehaviour
         player.crouching = Input.GetKey(KeyCode.C);
         player.yRotation = new Vector3(0, Input.GetAxis("Mouse X"));
         player.xRotation = new Vector3(-Input.GetAxis("Mouse Y"), 0);
+        player.grapple = Input.GetMouseButton(0);
     }
 }
