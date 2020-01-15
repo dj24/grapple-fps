@@ -3,7 +3,7 @@
 public class PlayerController : MonoBehaviour
 {
     Rigidbody rb;
-    float jumpHeight, walkSpeed, crouchSpeed, sprintSpeed, turnSpeed, currentSpeed, accel, velocity;
+    float jumpHeight, walkSpeed, crouchSpeed, sprintSpeed, turnSpeed, velocity;
     public bool forward, back, right, left, jumping, sprinting, crouching, grounded = false, sliding = false, grapple = false;
     public Vector3 runDirection,yRotation,xRotation;
 
@@ -11,15 +11,18 @@ public class PlayerController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         jumpHeight = 200f;
-        walkSpeed = 5f;
+        walkSpeed = 7.5f;
         crouchSpeed = 2.5f;
-        sprintSpeed = 10f;
+        sprintSpeed = 15f;
         turnSpeed = 200f;
-        accel = 10f;
     }
 
     void OnCollisionEnter(Collision collision)
     {
+        if (collision.gameObject.tag == null)
+        {
+            return;
+        }
         bool touchingFloor = collision.gameObject.tag == "Floor" || collision.gameObject.transform.parent.tag == "Floor";
         if (touchingFloor && !grounded)
         {
@@ -51,44 +54,26 @@ public class PlayerController : MonoBehaviour
     {
         velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z).magnitude;
     }
-
-    void GetCurrentSpeed()
+    
+    void Accelerate()
     {
         float maxSpeed = sprinting ? sprintSpeed : walkSpeed;
 
-        if (currentSpeed + accel * Time.deltaTime < maxSpeed)
+        if (velocity < maxSpeed)
         {
-            currentSpeed += accel * Time.deltaTime;
-            return;
+            rb.AddForce(runDirection * 100f);
         }
-        currentSpeed -= accel * Time.deltaTime;
-    }
-
-    void Accelerate()
-    {
-        GetCurrentSpeed();
-
-        rb.velocity = new Vector3(runDirection.x * currentSpeed, rb.velocity.y, runDirection.z * currentSpeed);
+        
     }
 
     void Deccelerate()
     {
-        currentSpeed = velocity;
+        float deccelSpeed = 10f;
 
-        float deccelSpeed = 5f;
-        float slideSpeed = 0.5f;
+        if (!grounded) deccelSpeed = 5f;
 
-        if (!grounded)
-        {
-            deccelSpeed = 1f;
-            return;
-        }
-        if (!crouching)
-        {
-            Vector3 deccelDirection = new Vector3(-rb.velocity.x, 0, -rb.velocity.z);
-            rb.AddForce(deccelDirection * deccelSpeed);
-            return;
-        }
+        float slideSpeed = 0.75f;
+
         if (sliding)
         {
             //we need to accelerate to counter act drag
@@ -96,15 +81,24 @@ public class PlayerController : MonoBehaviour
             rb.AddForce(accelDirection * slideSpeed);
             return;
         }
+
+        if (!crouching)
+        {
+            Vector3 deccelDirection = new Vector3(-rb.velocity.x, 0, -rb.velocity.z);
+            rb.AddForce(deccelDirection * deccelSpeed);
+            return;
+        }
+
     }
 
-    void CheckForJump()
+    bool CheckForGrounded()
     {
         if (jumping && grounded)
         {
-            grounded = false;
             rb.AddForce(transform.up * jumpHeight);
+            return grounded = false;
         }
+        return grounded;
     }
 
     void CheckForCrouch()
@@ -117,41 +111,33 @@ public class PlayerController : MonoBehaviour
         Camera.main.transform.localPosition = new Vector3(0, 0.5f, 0);
     }
 
-    void CheckForSlide()
+    bool CheckForSlide()
     {
-        if(crouching && sprinting && grounded)
+        if(crouching && sprinting && grounded && velocity > 0.1f)
         {
-            sliding = true;
             sprinting = false;
-            return;
+            return sliding = true;
         }
-
-        if(velocity < 0.1f || !crouching)
-        {
-            sliding = false;
-            return;
-        }
+        return sliding = false;
     }
 
     void MoveCharacter()
     {
+        //TODO: use add force in mid air to allow grapple to moveqq
         UpdateRunDirection();
 
+        //TODO: add crouching speed
         CheckForCrouch();
 
-        CheckForSlide();
-
-        CheckForJump();
-
-        bool moving = forward || back || right || left;
-
-        if (moving && !sliding)
+        if (CheckForGrounded())
         {
-            Accelerate();
-            return;
+            Deccelerate();
         }
 
-        Deccelerate();
+        if (!CheckForSlide())
+        {
+            Accelerate();
+        }
     }
 
     void DisplayVelocity()

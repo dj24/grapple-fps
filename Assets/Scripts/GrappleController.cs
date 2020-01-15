@@ -1,61 +1,71 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GrappleController : MonoBehaviour
 {
     PlayerController player;
-    Transform rope;
     Transform grappleTarget;
     Rigidbody rb;
-    Vector3 direction;
+    float maxDistance = 100f;
+    RopeController rope;
+    Vector3 target;
+    bool active;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        rope = GameObject.Find("Grapple").transform;
+        rope = GameManager.Rope;
         grappleTarget = GameObject.FindGameObjectWithTag("GrappleTarget").transform;
         player = GameManager.Player;
     }
 
     void ResetGrapple()
     {
-        rope.rotation = new Quaternion(0,0,0,0);
-        rope.localScale = Vector3.zero;
+        rope.transform.rotation = new Quaternion(0,0,0,0);
+        rope.transform.localScale = Vector3.zero;
     }
 
-    void CalculateRope()
+    void GetTarget()
     {
-        Vector3 start = transform.position;
-        Vector3 end = grappleTarget.position;
+        RaycastHit hit;
 
-        direction = start - end;
+        Image crosshair = GameObject.Find("Crosshair").GetComponent<Image>();
 
-        float distance = Vector3.Distance(end, start);
-        rope.localScale = new Vector3(0.1f,distance / 2,0.1f);
+        Vector3 fwd = Camera.main.transform.TransformDirection(Vector3.forward);
 
-
-        rope.position = (end - start) / 2.0f + start;
-        rope.rotation = Quaternion.FromToRotation(Vector3.up, end - start);
+        if (Physics.Raycast(transform.position, fwd, out hit, maxDistance) && hit.collider.gameObject.tag == "GrappleTarget")
+        {
+            crosshair.color = new Color32(255, 0, 0, 100);
+            if (!active && player.grapple)
+            {
+                active = true;
+                target = hit.point;
+            }
+            return;
+        }
+        crosshair.color = new Color32(255, 255, 255, 50);
     }
 
     void FixedUpdate()
     {
-        if (!player.grapple)
+        if (!player.grapple || rope.length > maxDistance)
         {
+            active = false;
             ResetGrapple();
             return;
         }
-        Vector3 fwd = transform.TransformDirection(Vector3.forward);
-        Debug.DrawRay(transform.position, fwd * 10, Color.yellow);
-        rope.LookAt(grappleTarget, Vector3.forward);
-        if (Physics.Raycast(transform.position, fwd, 10))
-        {
-            print("There is something in front of the object!");
-        }
 
-        rb.AddForce(-direction);
+        GetTarget();
 
-        CalculateRope();
+        rope.start = transform.position;
+        rope.end = target;
+
+        player.grounded = false;
+
+        float speed = Mathf.Pow((maxDistance - rope.length),1.1f);
+
+        rb.AddForce(-rope.direction * Time.fixedDeltaTime * speed);
     }
 }

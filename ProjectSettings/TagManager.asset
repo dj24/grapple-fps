@@ -6,6 +6,8 @@ TagManager:
   tags:
   - DebugNumber
   - Floor
+  - GrappleTarget
+  - GrappleRope
   layers:
   - Default
   - TransparentFX
