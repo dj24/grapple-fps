@@ -11,6 +11,13 @@ public class RopeController : MonoBehaviour
         direction = start - end;
 
         length = Vector3.Distance(end, start);
+
+        if (!active)
+        {
+            transform.localScale = new Vector3(0,0,0);
+            return;
+        }
+
         transform.localScale = new Vector3(0.1f, length / 2, 0.1f);
 
         transform.position = (end - start) / 2.0f + start;

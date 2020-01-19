@@ -11,7 +11,12 @@ public class GrappleController : MonoBehaviour
     float maxDistance = 100f;
     RopeController rope;
     Vector3 target;
+    MovingObject grappledObject;
     bool active;
+
+    public GameObject ropeObj;
+
+    public float smoothTime = 0.3f;
 
     void Start()
     {
@@ -38,34 +43,71 @@ public class GrappleController : MonoBehaviour
         if (Physics.Raycast(transform.position, fwd, out hit, maxDistance) && hit.collider.gameObject.tag == "GrappleTarget")
         {
             crosshair.color = new Color32(255, 0, 0, 100);
-            if (!active && player.grapple)
+            // Sets grapple end point before activating to stop weird jitter when adjusting.
+            if (!player.grapple)
             {
-                active = true;
-                target = hit.point;
+                grappledObject = hit.collider.gameObject.GetComponent<MovingObject>();
+                if (grappledObject)
+                {
+                    grappledObject.SetLocalPoint(hit.point);
+                }
+            }
+            if (rope && !rope.active && player.grapple)
+            {
+                rope.active = true;
+                //TODO: make this extend a base object class and remove this if              
             }
             return;
         }
         crosshair.color = new Color32(255, 255, 255, 50);
     }
 
+    void MoveTowardsPoint()
+    {
+        float speed = Mathf.Pow((maxDistance - rope.length), 1);
+
+        //float speed = 0;
+
+        rb.AddForce(-rope.direction * Time.fixedDeltaTime * speed);
+    }
+
     void FixedUpdate()
     {
-        if (!player.grapple || rope.length > maxDistance)
+        GetTarget();
+
+        if (!rope)
         {
-            active = false;
-            ResetGrapple();
             return;
         }
 
-        GetTarget();
+        if (!player.grapple || rope.length > maxDistance)
+        {
+            rope.active = false;
+            grappledObject = null;
+        }
 
-        rope.start = transform.position;
-        rope.end = target;
+        if (!rope.active)
+        {
+            return;
+        }
 
         player.grounded = false;
 
-        float speed = Mathf.Pow((maxDistance - rope.length),1.1f);
+        MoveTowardsPoint();
+    }
 
-        rb.AddForce(-rope.direction * Time.fixedDeltaTime * speed);
+    private void Update()
+    {
+        //rope.start = transform.position;
+
+        if (grappledObject)
+        {
+            //rope.end = grappledObject.globalPoint;
+            
+            if (player.grapple)
+            {
+                Instantiate(ropeObj, grappledObject.globalPoint, Quaternion.identity);
+            }
+        }
     }
 }

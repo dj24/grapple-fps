@@ -8,6 +8,7 @@ TagManager:
   - Floor
   - GrappleTarget
   - GrappleRope
+  - FlexiRope
   layers:
   - Default
   - TransparentFX

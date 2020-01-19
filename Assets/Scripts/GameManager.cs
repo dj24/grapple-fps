@@ -25,7 +25,12 @@ public class GameManager : MonoBehaviour
     {
         get
         {
-            return GameObject.FindWithTag("GrappleRope").GetComponent<RopeController>();
+            GameObject rope = GameObject.FindWithTag("GrappleRope");
+            if (!rope)
+            {
+                return null;
+            }
+            return rope.GetComponent<RopeController>();
         }
     }
 
@@ -33,7 +38,7 @@ public class GameManager : MonoBehaviour
 	{
         
         QualitySettings.vSyncCount = 0;  // VSync must be disabled
-        Application.targetFrameRate = 30;
+        Application.targetFrameRate = 59;
         
         if (Instance != null && Instance != this)
 		{
