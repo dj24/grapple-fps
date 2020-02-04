@@ -9,13 +9,9 @@ public class GrappleController : MonoBehaviour
     Transform grappleTarget;
     Rigidbody rb;
     float maxDistance = 100f;
-    RopeController rope;
     Vector3 target;
-    MovingObject grappledObject;
-    bool active;
-
-    public GameObject ropeObj;
-
+    RopeController rope;
+    Object grappledObject;
     public float smoothTime = 0.3f;
 
     void Start()
@@ -26,88 +22,61 @@ public class GrappleController : MonoBehaviour
         player = GameManager.Player;
     }
 
-    void ResetGrapple()
-    {
-        rope.transform.rotation = new Quaternion(0,0,0,0);
-        rope.transform.localScale = Vector3.zero;
-    }
-
     void GetTarget()
     {
-        RaycastHit hit;
-
-        Image crosshair = GameObject.Find("Crosshair").GetComponent<Image>();
-
-        Vector3 fwd = Camera.main.transform.TransformDirection(Vector3.forward);
-
-        if (Physics.Raycast(transform.position, fwd, out hit, maxDistance) && hit.collider.gameObject.tag == "GrappleTarget")
-        {
-            crosshair.color = new Color32(255, 0, 0, 100);
-            // Sets grapple end point before activating to stop weird jitter when adjusting.
-            if (!player.grapple)
-            {
-                grappledObject = hit.collider.gameObject.GetComponent<MovingObject>();
-                if (grappledObject)
-                {
-                    grappledObject.SetLocalPoint(hit.point);
-                }
-            }
-            if (rope && !rope.active && player.grapple)
-            {
-                rope.active = true;
-                //TODO: make this extend a base object class and remove this if              
-            }
+        if(rope.active){
             return;
         }
-        crosshair.color = new Color32(255, 255, 255, 50);
-    }
+        RaycastHit hit;
+        Image crosshair = GameObject.Find("Crosshair").GetComponent<Image>();
+        Vector3 fwd = Camera.main.transform.TransformDirection(Vector3.forward);
 
-    void MoveTowardsPoint()
-    {
-        float speed = Mathf.Pow((maxDistance - rope.length), 1);
+        bool castHitTarget = Physics.Raycast(transform.position, fwd, out hit, maxDistance);
+        if(!castHitTarget){
+            crosshair.color = new Color32(255, 255, 255, 10);
+            return;
+        }
+        crosshair.color = new Color32(255, 0, 0, 100);
 
-        //float speed = 0;
+        bool objectIsMoving = hit.collider.gameObject.GetComponent<Object>() != null;
 
-        rb.AddForce(-rope.direction * Time.fixedDeltaTime * speed);
+        if(objectIsMoving){
+            grappledObject = hit.collider.gameObject.GetComponent<Object>();
+        }
+        else{
+            grappledObject = null;
+        }
+        // Sets grapple end point before activating to stop weird jitter when adjusting.
+        if(!rope.active){
+            if(objectIsMoving){
+                grappledObject.SetLocalPoint(hit.point);
+                return;
+            }
+            rope.end = hit.point;
+            return;
+        }
     }
 
     void FixedUpdate()
     {
         GetTarget();
-
-        if (!rope)
-        {
-            return;
-        }
-
-        if (!player.grapple || rope.length > maxDistance)
-        {
-            rope.active = false;
-            grappledObject = null;
-        }
-
-        if (!rope.active)
-        {
-            return;
-        }
-
-        player.grounded = false;
-
-        MoveTowardsPoint();
+        // player.grounded = false;
     }
 
     private void Update()
     {
-        //rope.start = transform.position;
+        Vector3 leftHandPos = Camera.main.transform.position + Camera.main.transform.forward - Camera.main.transform.right - Camera.main.transform.up * 0.5f;
+        rope.start = leftHandPos;
 
-        if (grappledObject)
-        {
-            //rope.end = grappledObject.globalPoint;
-            
-            if (player.grapple)
-            {
-                Instantiate(ropeObj, grappledObject.globalPoint, Quaternion.identity);
-            }
+        if(grappledObject){
+            rope.end = grappledObject.globalPoint;
         }
+
+        if (player.grapple)
+        {
+            rope.active = true;
+            GameManager.Audio.playShoot();
+        }
+
     }
 }

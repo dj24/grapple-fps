@@ -3,37 +3,51 @@
 public class PlayerController : MonoBehaviour
 {
     Rigidbody rb;
-    float jumpHeight, walkSpeed, crouchSpeed, sprintSpeed, turnSpeed, velocity;
+    float jumpHeight, walkSpeed, sprintSpeed, turnSpeed, velocity, gravity;
     public bool forward, back, right, left, jumping, sprinting, crouching, grounded = false, sliding = false, grapple = false;
     public Vector3 runDirection,yRotation,xRotation;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        jumpHeight = 200f;
-        walkSpeed = 7.5f;
-        crouchSpeed = 2.5f;
-        sprintSpeed = 15f;
+        jumpHeight = 10f;
+        walkSpeed = 15f;
+        sprintSpeed = 30f;
         turnSpeed = 200f;
+        gravity = 20f;
     }
 
     void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.tag == null)
+        if(collision.contacts.Length > 0 && !grounded)
         {
-            return;
-        }
-        bool touchingFloor = collision.gameObject.tag == "Floor" || collision.gameObject.transform.parent.tag == "Floor";
-        if (touchingFloor && !grounded)
-        {
-            grounded = true;
+            ContactPoint contact = collision.contacts[0];
+            grounded = Vector3.Dot(contact.normal, Vector3.up) > 0.5;
+            if (grounded)
+            {
+                GameManager.Audio.playHitGround();
+            }
         }
     }
 
     void RotateCamera()
     {
+        //Weapon tilt anim
+        Transform weaponTransform = GameManager.CurrentWeapon.gameObject.transform;
+        float x = xRotation.x  * 5f;
+        float y = yRotation.y * 5f;
+        float z =  yRotation.y  * 5f + xRotation.x * 5f;
+        Quaternion smoothedRotation = Quaternion.Slerp(weaponTransform.localRotation, Quaternion.Euler(x, y, z), 0.1f);
+        weaponTransform.localRotation = smoothedRotation;
+
         transform.Rotate(yRotation * turnSpeed * Time.deltaTime);
         Camera.main.transform.Rotate(xRotation * turnSpeed * Time.deltaTime);
+    }
+
+    void ApplyGravity()
+    {
+        var gravityVector = new Vector3(0,-gravity,0);
+        rb.AddForce(gravityVector, ForceMode.Acceleration);
     }
 
     void UpdateRunDirection()
@@ -53,52 +67,37 @@ public class PlayerController : MonoBehaviour
     void UpdateVelocity()
     {
         velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z).magnitude;
+        var yVelocity = new Vector3(0, rb.velocity.y, 0).magnitude;
+        if(yVelocity > 10f){
+            grounded = false;
+        }
+        if(rb.velocity.y < 0){
+            gravity = 10f;
+        }
+        else{
+            gravity = 5f;
+        }
     }
     
     void Accelerate()
     {
         float maxSpeed = sprinting ? sprintSpeed : walkSpeed;
-
+        GameManager.Audio.playWalkSound();
         if (velocity < maxSpeed)
         {
-            rb.AddForce(runDirection * 100f);
+            rb.AddForce(runDirection * 300f);
         }
         
     }
 
-    void Deccelerate()
-    {
-        float deccelSpeed = 10f;
-
-        if (!grounded) deccelSpeed = 5f;
-
-        float slideSpeed = 0.75f;
-
-        if (sliding)
-        {
-            //we need to accelerate to counter act drag
-            Vector3 accelDirection = new Vector3(rb.velocity.x, 0, rb.velocity.z);
-            rb.AddForce(accelDirection * slideSpeed);
-            return;
-        }
-
-        if (!crouching)
-        {
-            Vector3 deccelDirection = new Vector3(-rb.velocity.x, 0, -rb.velocity.z);
-            rb.AddForce(deccelDirection * deccelSpeed);
-            return;
-        }
-
-    }
-
-    bool CheckForGrounded()
+    void CheckForJump()
     {
         if (jumping && grounded)
         {
-            rb.AddForce(transform.up * jumpHeight);
-            return grounded = false;
+            print("JUMP");
+            GameManager.Audio.playJump();
+            rb.AddForce(transform.up * jumpHeight * 100f);
         }
-        return grounded;
     }
 
     void CheckForCrouch()
@@ -120,7 +119,6 @@ public class PlayerController : MonoBehaviour
         }
         return sliding = false;
     }
-
     void MoveCharacter()
     {
         //TODO: use add force in mid air to allow grapple to moveqq
@@ -129,9 +127,15 @@ public class PlayerController : MonoBehaviour
         //TODO: add crouching speed
         CheckForCrouch();
 
-        if (CheckForGrounded())
+        CheckForJump();
+
+        if (sliding)
         {
-            Deccelerate();
+            //we need to accelerate to counter act drag
+            rb.drag = 0;
+        }
+        else{
+            rb.drag = 1;
         }
 
         if (!CheckForSlide())
@@ -143,10 +147,34 @@ public class PlayerController : MonoBehaviour
     void DisplayVelocity()
     {
         GameManager.DebugText.text = velocity.ToString();
+        ParticleSystem lines = GameManager.SpeedLines;
+        var main = lines.main;
+        float minSpeedToDisplayLines = 0.75f * sprintSpeed;
+        if(velocity > minSpeedToDisplayLines){
+            lines.Play();
+            float alpha = (velocity - minSpeedToDisplayLines) / minSpeedToDisplayLines;
+            main.startColor = new Color(1,1,1, alpha);
+        }
+        else{
+            lines.Stop();
+            main.startColor = new Color(1,1,1, 0);
+        }
+        
     }
 
     void FixedUpdate()
     {
+        ApplyGravity();
+
+        var rope = GameManager.Rope;
+        float grappleForce = 2f;
+        // if(grounded){
+        //     grappleForce *= 10f;
+        // }
+        if(rope.active){
+            rb.AddForce(-rope.direction * grappleForce);
+        }
+
         UpdateVelocity();
 
         DisplayVelocity();

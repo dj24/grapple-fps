@@ -2,7 +2,7 @@
 
 public class RopeController : MonoBehaviour
 {
-    public bool active = true;
+    public bool active = false;
     public Vector3 start, end, direction;
     public float length;
 
