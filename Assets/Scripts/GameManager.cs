@@ -5,6 +5,8 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
+	public static float adsSpeed = 20f;
+
     public static PlayerController Player
 	{
 		get

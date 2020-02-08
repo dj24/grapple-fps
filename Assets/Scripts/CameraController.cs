@@ -17,9 +17,9 @@ public class CameraController : MonoBehaviour
     void Update()
     {
         if(ads){
-            cam.fieldOfView = adsFov;
+            cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, adsFov, Time.deltaTime * GameManager.adsSpeed);
             return;
         }
-        cam.fieldOfView = originalFov;
+        cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, originalFov, Time.deltaTime * GameManager.adsSpeed);
     }
 }

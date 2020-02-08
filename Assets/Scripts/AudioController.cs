@@ -7,7 +7,7 @@ public class AudioController : MonoBehaviour
     public AudioClip jumpSound;
     public AudioClip shootSound;
     public AudioClip groundSound;
-    public AudioClip walkingSound;
+    public AudioClip stepSound;
     public AudioSource source;
     void Start()
     {
@@ -35,6 +35,11 @@ public class AudioController : MonoBehaviour
         playSound(jumpSound);
     }
 
+     public void playStep()
+    {
+        playSound(stepSound);
+    }
+
     public void playShoot()
     {
         playSound(shootSound);
@@ -47,7 +52,7 @@ public class AudioController : MonoBehaviour
 
     public void playWalkSound()
     {
-        playLoopingSound(walkingSound);
+        // playLoopingSound(walkingSound);
     }
 
     public void stopLooping(){

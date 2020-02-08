@@ -4,7 +4,7 @@ public class PlayerController : MonoBehaviour
 {
     Rigidbody rb;
     float jumpHeight, walkSpeed, sprintSpeed, turnSpeed, velocity, gravity;
-    public bool forward, back, right, left, jumping, sprinting, crouching, grounded = false, sliding = false, grapple = false;
+    public bool forward, back, right, left, jumping, walking, sprinting, crouching, grounded = false, sliding = false, grapple = false;
     public Vector3 runDirection,yRotation,xRotation;
 
     void Start()
@@ -32,13 +32,7 @@ public class PlayerController : MonoBehaviour
 
     void RotateCamera()
     {
-        //Weapon tilt anim
-        Transform weaponTransform = GameManager.CurrentWeapon.gameObject.transform;
-        float x = xRotation.x  * 5f;
-        float y = yRotation.y * 5f;
-        float z =  yRotation.y  * 5f + xRotation.x * 5f;
-        Quaternion smoothedRotation = Quaternion.Slerp(weaponTransform.localRotation, Quaternion.Euler(x, y, z), 0.1f);
-        weaponTransform.localRotation = smoothedRotation;
+        
 
         transform.Rotate(yRotation * turnSpeed * Time.deltaTime);
         Camera.main.transform.Rotate(xRotation * turnSpeed * Time.deltaTime);
@@ -94,7 +88,6 @@ public class PlayerController : MonoBehaviour
     {
         if (jumping && grounded)
         {
-            print("JUMP");
             GameManager.Audio.playJump();
             rb.AddForce(transform.up * jumpHeight * 100f);
         }
@@ -135,7 +128,7 @@ public class PlayerController : MonoBehaviour
             rb.drag = 0;
         }
         else{
-            rb.drag = 1;
+            rb.drag = 10;
         }
 
         if (!CheckForSlide())
@@ -182,5 +175,12 @@ public class PlayerController : MonoBehaviour
         RotateCamera();
 
         MoveCharacter();
+
+        if((forward || right || left || back) && grounded){
+            walking = true;
+        }
+        else{
+            walking = false;
+        }
     }
 }
