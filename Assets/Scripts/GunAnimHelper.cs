@@ -15,8 +15,8 @@ public class GunAnimHelper : MonoBehaviour
     public void muzzleFlash(){
         flash.Play();
         audio.Play();
+        GameManager.CurrentWeapon.Fire();
         GameManager.CurrentWeapon.bulletsFired++;
-        print(GameManager.CurrentWeapon.bulletsFired);
     }
 
     public void step(){

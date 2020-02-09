@@ -35,7 +35,11 @@ public class GameManager : MonoBehaviour
 	{
 		get
 		{
-			return GameObject.FindWithTag("DebugNumber").GetComponent<Text>();
+			var text = GameObject.FindWithTag("DebugNumber");
+			if(text != null){
+				return text.GetComponent<Text>();
+			}
+			return null;
 		}
 	}
 
@@ -71,6 +75,7 @@ public class GameManager : MonoBehaviour
     private void Awake()
 	{
         Cursor.visible = false;
+		// Time. timeScale = 0.25f;
         // QualitySettings.vSyncCount = 0;  // VSync must be disabled
         // Application.targetFrameRate = 59;
         

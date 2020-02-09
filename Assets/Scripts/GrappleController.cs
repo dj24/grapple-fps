@@ -28,15 +28,17 @@ public class GrappleController : MonoBehaviour
             return;
         }
         RaycastHit hit;
-        Image crosshair = GameObject.Find("Crosshair").GetComponent<Image>();
+        
         Vector3 fwd = Camera.main.transform.TransformDirection(Vector3.forward);
 
         bool castHitTarget = Physics.Raycast(transform.position, fwd, out hit, maxDistance);
+
+        // Image crosshair = GameObject.Find("Crosshair").GetComponent<Image>();
         if(!castHitTarget){
-            crosshair.color = new Color32(255, 255, 255, 10);
+            // crosshair.color = new Color32(255, 255, 255, 10);
             return;
         }
-        crosshair.color = new Color32(255, 0, 0, 100);
+        // crosshair.color = new Color32(255, 0, 0, 100);
 
         bool objectIsMoving = hit.collider.gameObject.GetComponent<Object>() != null;
 

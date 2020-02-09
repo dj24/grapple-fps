@@ -3,13 +3,14 @@
 public class PlayerController : MonoBehaviour
 {
     Rigidbody rb;
-    float jumpHeight, walkSpeed, sprintSpeed, turnSpeed, velocity, gravity;
+    float jumpHeight, walkSpeed, sprintSpeed, turnSpeed, velocity, gravity, drag;
     public bool forward, back, right, left, jumping, walking, sprinting, crouching, grounded = false, sliding = false, grapple = false;
     public Vector3 runDirection,yRotation,xRotation;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+        drag = rb.drag;
         jumpHeight = 10f;
         walkSpeed = 15f;
         sprintSpeed = 30f;
@@ -25,6 +26,7 @@ public class PlayerController : MonoBehaviour
             grounded = Vector3.Dot(contact.normal, Vector3.up) > 0.5;
             if (grounded)
             {
+                GameManager.CurrentWeapon.anim.SetTrigger("land");
                 GameManager.Audio.playHitGround();
             }
         }
@@ -32,8 +34,6 @@ public class PlayerController : MonoBehaviour
 
     void RotateCamera()
     {
-        
-
         transform.Rotate(yRotation * turnSpeed * Time.deltaTime);
         Camera.main.transform.Rotate(xRotation * turnSpeed * Time.deltaTime);
     }
@@ -66,29 +66,32 @@ public class PlayerController : MonoBehaviour
             grounded = false;
         }
         if(rb.velocity.y < 0){
-            gravity = 10f;
+            gravity = 20f;
         }
         else{
-            gravity = 5f;
+            gravity = 10f;
         }
     }
     
     void Accelerate()
     {
+        //TODO: preserve velocity when jumping
+        if(!grounded){
+            rb.AddForce(runDirection * 10f);
+            return;
+        }
         float maxSpeed = sprinting ? sprintSpeed : walkSpeed;
         GameManager.Audio.playWalkSound();
-        if (velocity < maxSpeed)
-        {
-            rb.AddForce(runDirection * 300f);
-        }
-        
+        rb.MovePosition(transform.position + runDirection * maxSpeed * Time.fixedDeltaTime);
     }
 
     void CheckForJump()
     {
         if (jumping && grounded)
         {
-            GameManager.Audio.playJump();
+            // TODO: add direction that player is moving on jump
+            GameManager.CurrentWeapon.anim.SetTrigger("jump");
+            // GameManager.Audio.playJump();
             rb.AddForce(transform.up * jumpHeight * 100f);
         }
     }
@@ -97,9 +100,11 @@ public class PlayerController : MonoBehaviour
     {
         if(crouching && grounded)
         {
+            GameManager.CurrentWeapon.crouch = true;
             Camera.main.transform.localPosition = new Vector3(0, 0, 0);
             return;
         }
+        GameManager.CurrentWeapon.crouch = false;
         Camera.main.transform.localPosition = new Vector3(0, 0.5f, 0);
     }
 
@@ -120,26 +125,30 @@ public class PlayerController : MonoBehaviour
         //TODO: add crouching speed
         CheckForCrouch();
 
-        CheckForJump();
-
         if (sliding)
         {
             //we need to accelerate to counter act drag
             rb.drag = 0;
         }
         else{
-            rb.drag = 10;
+            rb.drag = drag;
         }
 
         if (!CheckForSlide())
         {
             Accelerate();
         }
+
+        CheckForJump();
     }
 
     void DisplayVelocity()
     {
-        GameManager.DebugText.text = velocity.ToString();
+        var text = GameManager.DebugText;
+        if(text != null){
+            text.text = velocity.ToString();
+        }
+        
         ParticleSystem lines = GameManager.SpeedLines;
         var main = lines.main;
         float minSpeedToDisplayLines = 0.75f * sprintSpeed;

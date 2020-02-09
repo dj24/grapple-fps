@@ -9,6 +9,7 @@ public class AudioController : MonoBehaviour
     public AudioClip groundSound;
     public AudioClip stepSound;
     public AudioSource source;
+    public AudioClip impactSound;
     void Start()
     {
         source = gameObject.GetComponent<AudioSource>();
@@ -43,6 +44,11 @@ public class AudioController : MonoBehaviour
     public void playShoot()
     {
         playSound(shootSound);
+    }
+
+    public void playHit()
+    {
+        playSound(impactSound);
     }
 
     public void playHitGround()
