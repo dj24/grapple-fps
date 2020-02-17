@@ -108,7 +108,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 447c0bf103f59cd418c1a13b4d7683e2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  explosionPrefab: {fileID: 2596304079738071806, guid: 09260309b507ff749b6d7ecfb52400be,
+  explosionPrefab: {fileID: 8056720975160290430, guid: 991a4ccb14f2aac408dd9ebdc713cc63,
     type: 3}
 --- !u!96 &-2415132811023633196
 TrailRenderer:

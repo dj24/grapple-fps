@@ -28,5 +28,8 @@ public class InputHandler : MonoBehaviour
         rope.active = Input.GetKey(KeyCode.Q);
         weapon.firing = Input.GetMouseButton(0);
         weapon.ads = Input.GetMouseButton(1);
+        if(Input.GetKeyDown(KeyCode.R)){
+            weapon.StartReload();
+        }
     }
 }

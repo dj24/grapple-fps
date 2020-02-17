@@ -1,17 +1,39 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class WeaponController : MonoBehaviour
 {
     public Animator anim;
-    public bool firing, ads, crouch, jump;
+    public bool firing, ads, crouch, jump, reload;
     Vector3 hipPos, adsPos, crouchPos;
-    public int bulletsFired;
+    public int bulletsFired, ammoCapacity, reserveAmmo;
+    int ammoRemaining;
     ParticleSystem smoke;
     float smokeDuration = 5;   
     float smokeStartTime;
     public GameObject bullet;
+    Text ammoCounter;
+    public AudioSource source;
+    public AudioClip magOutSound;
+    public AudioClip magInSound;
+
+    void playSound(AudioClip clip)
+    {
+        source.loop = false;
+        source.clip = clip;
+        source.Play();
+    }    
+
+    public void playMagOut()
+    {
+        playSound(magOutSound);
+    }
+    public void playMagIn()
+    {
+        playSound(magInSound);
+    }
 
     private IEnumerator smokeCoroutine()
     {
@@ -23,6 +45,9 @@ public class WeaponController : MonoBehaviour
     }
     void Start()
     {
+        ammoCounter = GameObject.Find("/Canvas/Ammo").GetComponent<Text>();
+        ammoRemaining = ammoCapacity;
+        source = gameObject.GetComponent<AudioSource>();
         bulletsFired = 0;
         smoke = GetComponentInChildren<ParticleSystem>();
         smoke.Stop();
@@ -34,6 +59,8 @@ public class WeaponController : MonoBehaviour
 
     public void Fire()
     {
+        if(ammoRemaining <= 0) return;
+        ammoRemaining --;
         Vector3 spawnPos =  GameObject.FindWithTag("Bullet Spawn").transform.position;
         Instantiate(bullet, spawnPos, transform.rotation);
     }
@@ -79,13 +106,47 @@ public class WeaponController : MonoBehaviour
         }
     }
 
+    public void FinishReload(){
+        reload = false;
+        if(reserveAmmo < ammoCapacity){
+            ammoRemaining = reserveAmmo;
+            reserveAmmo = 0;
+        }
+        else{
+            int bulletsToReload = ammoCapacity - ammoRemaining;
+            reserveAmmo -= bulletsToReload;
+            ammoRemaining = ammoCapacity;
+        }
+    }
+
+    public void StartReload(){
+        if(!reload && reserveAmmo > 0 && ammoRemaining != ammoCapacity){
+            reload = true;
+            anim.SetTrigger("reload");
+        }
+    }
+
+    void HandleFiring(){
+        ammoCounter.text = ammoRemaining.ToString() + "/" + reserveAmmo.ToString();
+        if(ammoRemaining <=  0){
+            anim.SetBool("firing", false);
+            return;
+        }  
+        anim.SetBool("firing", firing);
+    }
+
+    void HandleMovement(){
+        anim.SetBool("walking", GameManager.Player.walking);
+        anim.SetBool("sprinting", GameManager.Player.sprinting);
+    }
+
     void Update()
     {
         HandleSmoke();
 
-        anim.SetBool("firing", firing);
-        anim.SetBool("walking", GameManager.Player.walking);
-        anim.SetBool("sprinting", GameManager.Player.sprinting);
+        HandleFiring();
+
+        HandleMovement();
 
         Vector3 currentAngle = transform.localRotation.eulerAngles;
 

@@ -22,4 +22,16 @@ public class GunAnimHelper : MonoBehaviour
     public void step(){
         GameManager.Audio.playStep();
     }
+
+    public void reloadDone(){
+        GameManager.CurrentWeapon.FinishReload();
+    }
+
+    public void magOut(){
+         GameManager.CurrentWeapon.playMagOut();
+    }
+
+    public void magIn(){
+         GameManager.CurrentWeapon.playMagIn();
+    }
 }

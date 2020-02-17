@@ -32,6 +32,15 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    void OnCollisionExit(Collision collision)
+    {
+        if(collision.contacts.Length > 0 && !grounded)
+        {
+            ContactPoint contact = collision.contacts[0];
+            grounded = !(Vector3.Dot(contact.normal, Vector3.up) > 0.5);
+        }  
+    }
+
     void RotateCamera()
     {
         transform.Rotate(yRotation * turnSpeed * Time.deltaTime);
@@ -73,6 +82,20 @@ public class PlayerController : MonoBehaviour
         }
     }
     
+    public Vector3 FindVelRelativeToLook() {
+        float lookAngle = transform.eulerAngles.y;
+        float moveAngle = Mathf.Atan2(rb.velocity.x, rb.velocity.z) * Mathf.Rad2Deg;
+
+        float u = Mathf.DeltaAngle(lookAngle, moveAngle);
+        float v = 90 - u;
+
+        float magnitue = rb.velocity.magnitude;
+        float zMag = magnitue * Mathf.Cos(u * Mathf.Deg2Rad);
+        float xMag = magnitue * Mathf.Cos(v * Mathf.Deg2Rad);
+        
+        return new Vector3(xMag,0,zMag);
+    }
+
     void Accelerate()
     {
         //TODO: preserve velocity when jumping
@@ -82,7 +105,12 @@ public class PlayerController : MonoBehaviour
         }
         float maxSpeed = sprinting ? sprintSpeed : walkSpeed;
         GameManager.Audio.playWalkSound();
-        rb.MovePosition(transform.position + runDirection * maxSpeed * Time.fixedDeltaTime);
+
+        if(velocity < maxSpeed){
+            rb.AddForce(runDirection * 100f);
+        }
+        
+        // rb.MovePosition(transform.position + runDirection * maxSpeed * Time.fixedDeltaTime);
     }
 
     void CheckForJump()
