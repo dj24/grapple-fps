@@ -5,19 +5,25 @@ using UnityEngine.UI;
 
 public class WeaponController : MonoBehaviour
 {
+    [HideInInspector]
     public Animator anim;
+    [HideInInspector]
     public bool firing, ads, crouch, jump, reload;
     Vector3 hipPos, adsPos, crouchPos;
+    [HideInInspector]
     public int bulletsFired, ammoCapacity, reserveAmmo;
     int ammoRemaining;
     ParticleSystem smoke;
     float smokeDuration = 5;   
     float smokeStartTime;
+    float maxDistance = 500f;
     public GameObject bullet;
     Text ammoCounter;
+    [HideInInspector]
     public AudioSource source;
     public AudioClip magOutSound;
     public AudioClip magInSound;
+    public GameObject explosionPrefab;
 
     void playSound(AudioClip clip)
     {
@@ -61,8 +67,26 @@ public class WeaponController : MonoBehaviour
     {
         if(ammoRemaining <= 0) return;
         ammoRemaining --;
+
         Vector3 spawnPos =  GameObject.FindWithTag("Bullet Spawn").transform.position;
         Instantiate(bullet, spawnPos, transform.rotation);
+
+        RaycastHit hit;
+        Vector3 fwd = Camera.main.transform.TransformDirection(Vector3.forward);
+        bool castHitTarget = Physics.Raycast(Camera.main.transform.position, fwd, out hit, maxDistance);
+        if(!castHitTarget)
+        {
+            return;
+        }
+        if(hit.transform.gameObject.layer == LayerMask.NameToLayer("Enemy"))
+        {
+            Quaternion rotation = Quaternion.identity * Quaternion.Euler(90, 0, 0);
+            GameObject explosion = Instantiate(explosionPrefab, hit.point, rotation);
+            Destroy (explosion, 0.5f);
+            Rigidbody rb = hit.transform.gameObject.GetComponent<Rigidbody>();
+            hit.transform.gameObject.GetComponentInParent<EnemyController>().TakeDamage(fwd,rb);
+        }
+        
     }
 
     void TiltWeapon(){
@@ -83,15 +107,16 @@ public class WeaponController : MonoBehaviour
         var player = GameManager.Player;
         float x = transform.localPosition.x, z = transform.localPosition.z;
 
-        if(player.forward) z += 0.1f;
-        if(player.back) z -= 0.1f;
-        if(player.left) x -= 0.1f;
-        if(player.right) x += 0.1f;
+        // change to use player direction
+        // if(player.forward) z += 0.1f;
+        // if(player.back) z -= 0.1f;
+        // if(player.left) x -= 0.1f;
+        // if(player.right) x += 0.1f;
 
         var newPos = new Vector3(x, transform.localPosition.y, z);
-        if(player.walking){
-            transform.localPosition = Vector3.Lerp(transform.localPosition, newPos, smoothTime * Time.deltaTime);
-        }
+        // if(player.walking){
+        //     transform.localPosition = Vector3.Lerp(transform.localPosition, newPos, smoothTime * Time.deltaTime);
+        // }
         
     }
 
@@ -136,8 +161,9 @@ public class WeaponController : MonoBehaviour
     }
 
     void HandleMovement(){
+        //TODO: Use status instead
         anim.SetBool("walking", GameManager.Player.walking);
-        anim.SetBool("sprinting", GameManager.Player.sprinting);
+        // anim.SetBool("sprinting", GameManager.Player.sprinting);
     }
 
     void Update()

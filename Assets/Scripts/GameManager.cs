@@ -15,6 +15,14 @@ public class GameManager : MonoBehaviour
 		}
 	}
 
+	public static InputHandler Input
+	{
+		get
+		{
+			return Camera.main.GetComponent<InputHandler>();
+		}
+	}
+
 	public static CameraController PlayerCamera
 	{
 		get
@@ -75,6 +83,7 @@ public class GameManager : MonoBehaviour
     private void Awake()
 	{
         Cursor.visible = false;
+		Cursor.lockState = CursorLockMode.Locked;
 		// Time. timeScale = 0.25f;
         // QualitySettings.vSyncCount = 0;  // VSync must be disabled
         // Application.targetFrameRate = 59;

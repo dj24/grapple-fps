@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bcf384b154398e341b6b29969c078198, type: 3}
   m_Name: MotionBlur
   m_EditorClassIdentifier: 
-  active: 0
+  active: 1
   m_AdvancedMode: 0
   quality:
     m_OverrideState: 1
-    m_Value: 2
+    m_Value: 3
   intensity:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 1.5
     min: 0
   maximumVelocity:
     m_OverrideState: 1
@@ -43,7 +43,7 @@ MonoBehaviour:
     max: 20
   m_SampleCount:
     m_OverrideState: 1
-    m_Value: 8
+    m_Value: 12
     min: 2
 --- !u!114 &-2109818796249167647
 MonoBehaviour:
@@ -87,7 +87,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a81bcacc415a1f743bfdf703afc52027, type: 3}
   m_Name: GradientSky
   m_EditorClassIdentifier: 
-  active: 1
+  active: 0
   m_AdvancedMode: 0
   rotation:
     m_OverrideState: 1
@@ -96,10 +96,10 @@ MonoBehaviour:
     max: 360
   skyIntensityMode:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: 2
   exposure:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: 0.2
   multiplier:
     m_OverrideState: 1
     m_Value: 1
@@ -126,19 +126,19 @@ MonoBehaviour:
     m_Value: 0
   top:
     m_OverrideState: 1
-    m_Value: {r: 0, g: 0, b: 1, a: 1}
+    m_Value: {r: 1024, g: 1024, b: 1024, a: 1}
     hdr: 1
     showAlpha: 0
     showEyeDropper: 1
   middle:
     m_OverrideState: 1
-    m_Value: {r: 0.3, g: 0.7, b: 1, a: 1}
+    m_Value: {r: 1024, g: 1024, b: 1024, a: 1}
     hdr: 1
     showAlpha: 0
     showEyeDropper: 1
   bottom:
     m_OverrideState: 1
-    m_Value: {r: 1, g: 1, b: 1, a: 1}
+    m_Value: {r: 1, g: 0.009601215, b: 0, a: 1}
     hdr: 1
     showAlpha: 0
     showEyeDropper: 1
@@ -158,13 +158,13 @@ MonoBehaviour:
   m_Name: SampleScenePostProcessingSettings
   m_EditorClassIdentifier: 
   components:
+  - {fileID: 6725800739811434734}
   - {fileID: 8711377374188185572}
   - {fileID: 6640133647794636954}
   - {fileID: 396278178000043239}
-  - {fileID: -2109818796249167647}
   - {fileID: -8983262172737806397}
   - {fileID: -1066819526727272924}
-  - {fileID: 6725800739811434734}
+  - {fileID: -2109818796249167647}
   - {fileID: 8803050318080810284}
 --- !u!114 &396278178000043239
 MonoBehaviour:
@@ -369,7 +369,7 @@ MonoBehaviour:
     max: 1
   radius:
     m_OverrideState: 1
-    m_Value: 2
+    m_Value: 1
     min: 0.25
     max: 5
   temporalAccumulation:
