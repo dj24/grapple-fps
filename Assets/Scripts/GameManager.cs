@@ -15,6 +15,15 @@ public class GameManager : MonoBehaviour
 		}
 	}
 
+	 public static Transform Canvas
+	{
+		get
+		{
+			return GameObject.Find("/Canvas").transform;
+		}
+	}
+	
+
 	public static InputHandler Input
 	{
 		get

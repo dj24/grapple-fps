@@ -5,7 +5,7 @@ using UnityEngine;
 public class EnemyController : MonoBehaviour
 {
     Animator anim;
-    int health;
+    public int health;
 
     private void SetGravtiy(bool status){
         var rigidBodies = GetComponentsInChildren<Rigidbody>();
@@ -24,9 +24,12 @@ public class EnemyController : MonoBehaviour
         SetGravtiy(true);
         anim.enabled = false;
     }
+
     public void TakeDamage(Vector3 force, Rigidbody rb){
         anim.SetTrigger("Hit");
-        health -= 30;
+        int damage = 20;
+        health -= damage;
+        DamageNumberManager.CreateDamage(gameObject, damage);
         if(health <= 0) Die();
         rb.AddForce(force * 10000f);
     }

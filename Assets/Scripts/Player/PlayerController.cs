@@ -2,7 +2,7 @@
 
 public class PlayerController : MonoBehaviour
 {
-    public enum Status { idle, moving, crouching, sliding, wallRunning, grabbedLedge, climbingLedge }
+    public enum Status { sliding, wallRunning, grabbedLedge, climbingLedge }
     public Status status;
     [SerializeField]
     private LayerMask ledgeLayer;
@@ -10,12 +10,12 @@ public class PlayerController : MonoBehaviour
     private LayerMask wallrunLayer;
     Rigidbody rb;
     [HideInInspector]
-    public bool grapple = false, isGrounded, walking, prevGrounded;
+    public bool grapple = false, isGrounded, walking, prevGrounded, sprinting, crouching;
     [HideInInspector]
     public Vector3 yRotation,xRotation;
     CharacterController characterController;
 
-    public float speed = 100.0f;
+    public float speed;
     public float jumpSpeed = 50.0f;
     public float turnSpeed = 200f;
     public float gravity =  75.0f;
@@ -66,6 +66,7 @@ public class PlayerController : MonoBehaviour
 
 
     void SetDirection(){
+        speed = sprinting ? 20f : 10f;
         if(isGrounded){
             if( GameManager.Input.right != 0 || GameManager.Input.forward != 0){
                 walking = true;
@@ -90,9 +91,17 @@ public class PlayerController : MonoBehaviour
         prevGrounded = isGrounded;
     }
 
+    void CheckForCrouch(){
+        crouching = GameManager.Input.crouching && isGrounded;
+    }
+
     void CheckForJump(){
         if (GameManager.Input.jump && isGrounded)
         {
+            if(crouching){
+                crouching = false;
+                return;
+            }
             GameManager.CurrentWeapon.anim.SetTrigger("jump");
             moveDirection.y = jumpSpeed;
         }
@@ -103,8 +112,19 @@ public class PlayerController : MonoBehaviour
     }
     void Update(){
         RotateCamera();
+
+        sprinting = GameManager.Input.sprinting;
         
         isGrounded = Physics.Raycast(transform.position, Vector3.down, 2f, 1 << LayerMask.NameToLayer("Ground"));
+
+        CheckForCrouch();
+
+        if(crouching){
+            Camera.main.transform.localPosition =  new Vector3(0,-0.5f,0);
+        }
+        else{
+            Camera.main.transform.localPosition =  new Vector3(0,0.5f,0);
+        }
 
         SetDirection();
 

@@ -9,6 +9,9 @@ TagManager:
   - GrappleRope
   - DebugNumber
   - Bullet Spawn
+  - Head
+  - DamageNumber
+  - FlexiRope
   layers:
   - Default
   - TransparentFX

@@ -8,7 +8,7 @@ public class WeaponController : MonoBehaviour
     [HideInInspector]
     public Animator anim;
     [HideInInspector]
-    public bool firing, ads, crouch, jump, reload;
+    public bool firing, ads, jump, reload;
     Vector3 hipPos, adsPos, crouchPos;
     [HideInInspector]
     public int bulletsFired, ammoCapacity, reserveAmmo;
@@ -21,9 +21,10 @@ public class WeaponController : MonoBehaviour
     Text ammoCounter;
     [HideInInspector]
     public AudioSource source;
-    public AudioClip magOutSound;
-    public AudioClip magInSound;
+    public AudioClip magOutSound, magInSound;
     public GameObject explosionPrefab;
+
+    private float velocity = 0;
 
     void playSound(AudioClip clip)
     {
@@ -55,12 +56,15 @@ public class WeaponController : MonoBehaviour
         ammoRemaining = ammoCapacity;
         source = gameObject.GetComponent<AudioSource>();
         bulletsFired = 0;
-        smoke = GetComponentInChildren<ParticleSystem>();
-        smoke.Stop();
         hipPos = transform.localPosition;
         adsPos = new Vector3(0,-0.095f,0.8f);
         crouchPos = new Vector3(0,-0.4f,0.9f);
         anim = GetComponentInChildren<Animator>();
+        smoke = GetComponentInChildren<ParticleSystem>();
+        if(smoke == null){
+            return;
+        }
+        smoke.Stop();
     }
 
     public void Fire()
@@ -121,6 +125,9 @@ public class WeaponController : MonoBehaviour
     }
 
     void HandleSmoke(){
+        if(!smoke){
+            return;
+        }
         if(!firing && !smoke.isPlaying && bulletsFired > 20){
             StartCoroutine(smokeCoroutine());
         }
@@ -163,6 +170,7 @@ public class WeaponController : MonoBehaviour
     void HandleMovement(){
         //TODO: Use status instead
         anim.SetBool("walking", GameManager.Player.walking);
+        anim.SetBool("spriting", GameManager.Player.sprinting);
         // anim.SetBool("sprinting", GameManager.Player.sprinting);
     }
 
@@ -174,22 +182,27 @@ public class WeaponController : MonoBehaviour
 
         HandleMovement();
 
-        Vector3 currentAngle = transform.localRotation.eulerAngles;
-
-        transform.localEulerAngles = new Vector3(transform.localEulerAngles.x, transform.localEulerAngles.y, 0);
+        Vector3 currentAngle = transform.localEulerAngles;
+        Vector3 targetPos;
+        GameManager.PlayerCamera.ads = ads;
+        float targetAngle;
 
         if(ads){
-            transform.localPosition = Vector3.Lerp(transform.localPosition, adsPos, Time.deltaTime * GameManager.adsSpeed);
-            GameManager.PlayerCamera.ads = true;
-            return;
+            targetPos = adsPos;
+            targetAngle = 0;
         }
-        else if(crouch){
-            // transform.localPosition = Vector3.Lerp(transform.localPosition, crouchPos, Time.deltaTime * GameManager.adsSpeed);
-            transform.localPosition = crouchPos;
-            transform.localEulerAngles = new Vector3(transform.localEulerAngles.x, transform.localEulerAngles.y, 60f);
+        else if(GameManager.Player.crouching){
+            targetPos = crouchPos;
+            targetAngle = 60f;
         }
-        transform.localPosition = Vector3.Lerp(transform.localPosition, hipPos, Time.deltaTime * GameManager.adsSpeed);
-        GameManager.PlayerCamera.ads = false;
+        else{
+            targetPos = hipPos;
+            targetAngle = 0;
+        }
+        float smoothedRotation = Mathf.SmoothDamp(currentAngle.z, targetAngle, ref velocity, Time.deltaTime * GameManager.adsSpeed);
+        transform.localRotation = Quaternion.Lerp(Quaternion.Euler(0,0,currentAngle.z), Quaternion.Euler(0,0,targetAngle), Time.deltaTime * GameManager.adsSpeed);
+        transform.localPosition = Vector3.Lerp(transform.localPosition, targetPos, Time.deltaTime * GameManager.adsSpeed);
+        // transform.localEulerAngles = new Vector3(0, 0, smoothedRotation);
     }
 
     void LateUpdate(){

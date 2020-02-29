@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.VFX;
 
+
 public class GunAnimHelper : MonoBehaviour
 {
     VisualEffect flash;
@@ -12,9 +13,19 @@ public class GunAnimHelper : MonoBehaviour
         flash = GetComponentInChildren<VisualEffect>();
         audio = GetComponent<AudioSource>();
     }
+
+    IEnumerator ToggleLight()
+    {
+        GameObject light = flash.transform.Find("Light").gameObject;
+        light.SetActive(true);
+        yield return new WaitForSeconds(0.1f);
+        light.SetActive(false);
+    }
+
     public void muzzleFlash(){
-        flash.Play();
-        audio.Play();
+        if(flash != null) flash.Play();
+        if(audio != null) audio.Play();
+        if(GetComponent<Light>() != null) StartCoroutine(ToggleLight());
         GameManager.CurrentWeapon.Fire();
         GameManager.CurrentWeapon.bulletsFired++;
     }
