@@ -10,7 +10,6 @@ public class WeaponController : MonoBehaviour
     [HideInInspector]
     public bool firing, ads, jump, reload;
     Vector3 hipPos, adsPos, crouchPos;
-    [HideInInspector]
     public int bulletsFired, ammoCapacity, reserveAmmo;
     int ammoRemaining;
     ParticleSystem smoke;
@@ -72,8 +71,12 @@ public class WeaponController : MonoBehaviour
         if(ammoRemaining <= 0) return;
         ammoRemaining --;
 
-        Vector3 spawnPos =  GameObject.FindWithTag("Bullet Spawn").transform.position;
-        Instantiate(bullet, spawnPos, transform.rotation);
+
+        GameObject spawn =  GameObject.FindWithTag("Bullet Spawn");
+        if(spawn){
+            Vector3 spawnPos = spawn.transform.position;
+            Instantiate(bullet, spawnPos, transform.rotation);
+        }
 
         RaycastHit hit;
         Vector3 fwd = Camera.main.transform.TransformDirection(Vector3.forward);
@@ -200,13 +203,14 @@ public class WeaponController : MonoBehaviour
             targetAngle = 0;
         }
         float smoothedRotation = Mathf.SmoothDamp(currentAngle.z, targetAngle, ref velocity, Time.deltaTime * GameManager.adsSpeed);
+
         transform.localRotation = Quaternion.Lerp(Quaternion.Euler(0,0,currentAngle.z), Quaternion.Euler(0,0,targetAngle), Time.deltaTime * GameManager.adsSpeed);
         transform.localPosition = Vector3.Lerp(transform.localPosition, targetPos, Time.deltaTime * GameManager.adsSpeed);
         // transform.localEulerAngles = new Vector3(0, 0, smoothedRotation);
     }
 
     void LateUpdate(){
-        TiltWeapon();
-        MoveWeapon();
+        // TiltWeapon();
+        // MoveWeapon();
     }
 }

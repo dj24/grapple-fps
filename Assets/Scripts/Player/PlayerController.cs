@@ -32,8 +32,9 @@ public class PlayerController : MonoBehaviour
     {
         transform.Rotate(yRotation * turnSpeed * Time.deltaTime);
         if(xRotation.x == 0) return;
-        var cam = Camera.main.transform;
-        var currentX = Camera.main.transform.eulerAngles.x;
+        var cam = GameObject.Find("Player Pivot").transform;
+        var currentX = GameObject.Find("Player Pivot").transform.eulerAngles.x;
+        
         // Allow for negative angles
         currentX = (currentX > 180) ? currentX - 360 : currentX;
         var newX = currentX + xRotation.x * turnSpeed * Time.deltaTime;
