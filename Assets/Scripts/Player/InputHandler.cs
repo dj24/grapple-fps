@@ -20,6 +20,8 @@ public class InputHandler : MonoBehaviour
     {
         forward = Input.GetAxis("Vertical");
         right = Input.GetAxis("Horizontal");
+        weapon.anim.SetFloat("xMove",right, 1f, Time.deltaTime * 10f);
+        weapon.anim.SetFloat("zMove",forward, 1f, Time.deltaTime * 10f);
         // player.forward = Input.GetKey(KeyCode.W);
         // player.back = Input.GetKey(KeyCode.S);
         // player.right = Input.GetKey(KeyCode.D);
@@ -33,6 +35,7 @@ public class InputHandler : MonoBehaviour
         rope.active = Input.GetKey(KeyCode.Q);
         weapon.firing = Input.GetMouseButton(0);
         weapon.ads = Input.GetMouseButton(1);
+        weapon.anim.SetBool("ads",Input.GetMouseButton(1));
         if(Input.GetKeyDown(KeyCode.R)){
             weapon.StartReload();
         }

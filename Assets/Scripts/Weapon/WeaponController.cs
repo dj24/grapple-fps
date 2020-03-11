@@ -173,7 +173,7 @@ public class WeaponController : MonoBehaviour
     void HandleMovement(){
         //TODO: Use status instead
         anim.SetBool("walking", GameManager.Player.walking);
-        anim.SetBool("spriting", GameManager.Player.sprinting);
+        anim.SetBool("sprinting", GameManager.Player.sprinting);
         // anim.SetBool("sprinting", GameManager.Player.sprinting);
     }
 

@@ -9,7 +9,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField]
     private LayerMask wallrunLayer;
     Rigidbody rb;
-    [HideInInspector]
+    // [HideInInspector]
     public bool grapple = false, isGrounded, walking, prevGrounded, sprinting, crouching;
     [HideInInspector]
     public Vector3 yRotation,xRotation;
@@ -30,11 +30,13 @@ public class PlayerController : MonoBehaviour
 
     void RotateCamera()
     {
+        
         transform.Rotate(yRotation * turnSpeed * Time.deltaTime);
+        GameManager.CurrentWeapon.anim.SetFloat("yRotate",xRotation.x, 1f, Time.deltaTime * 10f);
+        GameManager.CurrentWeapon.anim.SetFloat("xRotate",yRotation.y, 1f, Time.deltaTime * 10f);
         if(xRotation.x == 0) return;
         var cam = GameObject.Find("Player Pivot").transform;
         var currentX = GameObject.Find("Player Pivot").transform.eulerAngles.x;
-        
         // Allow for negative angles
         currentX = (currentX > 180) ? currentX - 360 : currentX;
         var newX = currentX + xRotation.x * turnSpeed * Time.deltaTime;
