@@ -1,27 +1,25 @@
 ﻿using UnityEngine;
+using System.Collections;
 
 public class PlayerController : MonoBehaviour
 {
+    #region Variables
     public enum Status { sliding, wallRunning, grabbedLedge, climbingLedge }
     public Status status;
-    [SerializeField]
-    private LayerMask ledgeLayer;
-    [SerializeField]
-    private LayerMask wallrunLayer;
     Rigidbody rb;
-    // [HideInInspector]
-    public bool grapple = false, isGrounded, walking, prevGrounded, sprinting, crouching;
-    [HideInInspector]
+    //TODO: CHANGE THIS TO BE AN ENUM
+    [SerializeField]
+    bool isGrounded;
+    public bool walking, sprinting;
     public Vector3 yRotation,xRotation;
     CharacterController characterController;
 
     public float speed;
-    public float jumpSpeed = 50.0f;
-    public float turnSpeed = 200f;
-    public float gravity =  75.0f;
-
+    public float jumpSpeed;
+    public float turnSpeed;
+    public float gravity;
     private Vector3 moveDirection = Vector3.zero;
-
+    #endregion
     void Start()
     {
         characterController = GetComponent<CharacterController>();
@@ -30,13 +28,19 @@ public class PlayerController : MonoBehaviour
 
     void RotateCamera()
     {
-        
+        var weapon = GetComponentInChildren<WeaponController>();
         transform.Rotate(yRotation * turnSpeed * Time.deltaTime);
-        GameManager.CurrentWeapon.anim.SetFloat("yRotate",xRotation.x, 1f, Time.deltaTime * 10f);
-        GameManager.CurrentWeapon.anim.SetFloat("xRotate",yRotation.y, 1f, Time.deltaTime * 10f);
+
+        // Amount that gun is tilted by when aiming  
+        float animFactor = 0.005f;
+
+        weapon.anim.SetFloat("yRotate",xRotation.x * turnSpeed * animFactor, 1f, Time.deltaTime * 10f);
+        weapon.anim.SetFloat("xRotate",yRotation.y * turnSpeed * animFactor, 1f, Time.deltaTime * 10f);
+
         if(xRotation.x == 0) return;
+
         var cam = GameObject.Find("Player Pivot").transform;
-        var currentX = GameObject.Find("Player Pivot").transform.eulerAngles.x;
+        var currentX = cam.eulerAngles.x;
         // Allow for negative angles
         currentX = (currentX > 180) ? currentX - 360 : currentX;
         var newX = currentX + xRotation.x * turnSpeed * Time.deltaTime;
@@ -44,32 +48,9 @@ public class PlayerController : MonoBehaviour
         cam.eulerAngles = new Vector3(clampedX, cam.eulerAngles.y, cam.eulerAngles.z);
     }
 
-    void FixedUpdate()
-    {
-
-        // switch (status)
-        // {
-        //     case Status.sliding:
-        //         SlideMovement();
-        //         break;
-        //     case Status.grabbedLedge:
-        //         GrabbedLedgeMovement();
-        //         break;
-        //     case Status.climbingLedge:
-        //         ClimbLedgeMovement();
-        //         break;
-        //     case Status.wallRunning:
-        //         WallrunningMovement();
-        //         break;
-        //     default:
-        //         DefaultMovement();
-        //         break;
-        // }
-    }
-
 
     void SetDirection(){
-        speed = sprinting ? 20f : 10f;
+        speed = sprinting ? 10f : 5f;
         if(isGrounded){
             if( GameManager.Input.right != 0 || GameManager.Input.forward != 0){
                 walking = true;
@@ -81,63 +62,47 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void ApplyGravity(){
-        if(!isGrounded){
-            moveDirection.y -= gravity * Time.deltaTime;
-        }
-    }
-
-    void CheckForLanding(){
-         if(!prevGrounded && isGrounded){
+    void GroundCheck(){
+        RaycastHit hit;
+        bool groundCheck = Physics.Raycast(transform.TransformPoint(characterController.center), Vector3.down, out hit,characterController.height/2, 1 << LayerMask.NameToLayer("Ground"));
+        if(!isGrounded && groundCheck){
             GameManager.CurrentWeapon.anim.SetTrigger("land");
         }
-        prevGrounded = isGrounded;
+        isGrounded = groundCheck;
     }
 
-    void CheckForCrouch(){
-        crouching = GameManager.Input.crouching && isGrounded;
+    void ApplyGravity(){
+        if(!isGrounded){
+            moveDirection -= new Vector3(0,gravity * Time.deltaTime,0);
+        }
     }
-
+    void MovePlayer(){
+        characterController.Move(moveDirection * Time.deltaTime);
+    }
     void CheckForJump(){
         if (GameManager.Input.jump && isGrounded)
         {
-            if(crouching){
-                crouching = false;
-                return;
-            }
             GameManager.CurrentWeapon.anim.SetTrigger("jump");
             moveDirection.y = jumpSpeed;
         }
-    }
-
-    void MovePlayer(){
-        characterController.Move(moveDirection * Time.deltaTime);
     }
     void Update(){
         RotateCamera();
 
         sprinting = GameManager.Input.sprinting;
-        
-        isGrounded = Physics.Raycast(transform.position, Vector3.down, 2f, 1 << LayerMask.NameToLayer("Ground"));
 
-        CheckForCrouch();
-
-        if(crouching){
-            Camera.main.transform.localPosition =  new Vector3(0,-0.5f,0);
-        }
-        else{
-            Camera.main.transform.localPosition =  new Vector3(0,0.5f,0);
-        }
+        GroundCheck();
 
         SetDirection();
 
         CheckForJump();
 
-        CheckForLanding();
-
         ApplyGravity();
 
         MovePlayer();
-        
+
+        Debug.DrawRay(transform.TransformPoint(characterController.center), Vector3.down , Color.red);
+
+        GameManager.DebugText.text = moveDirection.ToString();
     }
 }

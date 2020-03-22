@@ -3,7 +3,33 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
-    public static GameManager Instance { get; private set; }
+	public static GameManager instance = null;              
+     void Start()
+     {
+		 
+		// This locks the cursor
+		Cursor.lockState = CursorLockMode.Locked;
+		
+		// If you unlock the cursor, but its still invisible, try this:
+		Cursor.visible = false;
+
+         //Check if instance already exists
+         if (instance == null)
+             
+             //if not, set instance to this
+             instance = this;
+         
+         //If instance already exists and it's not this:
+         else if (instance != this)
+             
+             //Then destroy this. This enforces our singleton pattern, 
+             // meaning there can only ever be one instance of a GameManager.
+             Destroy(gameObject);    
+         
+         //Sets this to not be destroyed when reloading scene / Switching scenes
+         DontDestroyOnLoad(gameObject); // VERY IMPORTANT
+         
+     }     
 
 	public static float adsSpeed = 20f;
 
@@ -87,23 +113,5 @@ public class GameManager : MonoBehaviour
         {
             return GameObject.Find("Speed Lines").GetComponent<ParticleSystem>();
         }
-	}
-
-    private void Awake()
-	{
-        Cursor.visible = false;
-		Cursor.lockState = CursorLockMode.Locked;
-		// Time. timeScale = 0.25f;
-        // QualitySettings.vSyncCount = 0;  // VSync must be disabled
-        // Application.targetFrameRate = 59;
-        
-        if (Instance != null && Instance != this)
-		{
-			Destroy(this.gameObject);
-		}
-		else
-		{
-			Instance = this;
-		}
 	}
 }

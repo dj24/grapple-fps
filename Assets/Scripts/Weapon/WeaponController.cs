@@ -1,15 +1,18 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.HighDefinition;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class WeaponController : MonoBehaviour
 {
+
     [HideInInspector]
     public Animator anim;
     [HideInInspector]
-    public bool firing, ads, jump, reload;
-    Vector3 hipPos, adsPos, crouchPos;
+    public bool firing, ads, jump, reload, inspect;
+    Vector3 hipPos, adsPos;
     public int bulletsFired, ammoCapacity, reserveAmmo;
     int ammoRemaining;
     ParticleSystem smoke;
@@ -51,13 +54,15 @@ public class WeaponController : MonoBehaviour
     }
     void Start()
     {
-        ammoCounter = GameObject.Find("/Canvas/Ammo").GetComponent<Text>();
+        var ammoCounterUI = GameObject.FindWithTag("AmmoCount");
+        if(ammoCounter){
+            ammoCounter = ammoCounterUI.GetComponent<Text>();
+        }
         ammoRemaining = ammoCapacity;
         source = gameObject.GetComponent<AudioSource>();
         bulletsFired = 0;
         hipPos = transform.localPosition;
         adsPos = new Vector3(0,-0.095f,0.8f);
-        crouchPos = new Vector3(0,-0.4f,0.9f);
         anim = GetComponentInChildren<Animator>();
         smoke = GetComponentInChildren<ParticleSystem>();
         if(smoke == null){
@@ -70,7 +75,6 @@ public class WeaponController : MonoBehaviour
     {
         if(ammoRemaining <= 0) return;
         ammoRemaining --;
-
 
         GameObject spawn =  GameObject.FindWithTag("Bullet Spawn");
         if(spawn){
@@ -92,42 +96,10 @@ public class WeaponController : MonoBehaviour
             Destroy (explosion, 0.5f);
             Rigidbody rb = hit.transform.gameObject.GetComponent<Rigidbody>();
             hit.transform.gameObject.GetComponentInParent<EnemyController>().TakeDamage(fwd,rb);
-        }
-        
+        }   
     }
 
-    void TiltWeapon(){
-        //tilts weapon according to aim
-        float tiltAmount = ads ? 1f : 5f;
-        float smoothTime = ads ? 5f : 10f;
-
-        float x = GameManager.Player.xRotation.x  * tiltAmount;
-        float y = GameManager.Player.yRotation.y * tiltAmount;
-        float z =  x + y;
-        Quaternion smoothedRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(x, y, z), smoothTime * Time.deltaTime);
-        transform.localRotation = smoothedRotation;
-    }
-
-    void MoveWeapon(){
-        //moves weapon according to player movement
-        float smoothTime = 2.5f;
-        var player = GameManager.Player;
-        float x = transform.localPosition.x, z = transform.localPosition.z;
-
-        // change to use player direction
-        // if(player.forward) z += 0.1f;
-        // if(player.back) z -= 0.1f;
-        // if(player.left) x -= 0.1f;
-        // if(player.right) x += 0.1f;
-
-        var newPos = new Vector3(x, transform.localPosition.y, z);
-        // if(player.walking){
-        //     transform.localPosition = Vector3.Lerp(transform.localPosition, newPos, smoothTime * Time.deltaTime);
-        // }
-        
-    }
-
-    void HandleSmoke(){
+    private void HandleSmoke(){
         if(!smoke){
             return;
         }
@@ -162,7 +134,9 @@ public class WeaponController : MonoBehaviour
     }
 
     void HandleFiring(){
-        ammoCounter.text = ammoRemaining.ToString() + "/" + reserveAmmo.ToString();
+        if(ammoCounter){
+            ammoCounter.text = ammoRemaining.ToString() + "/" + reserveAmmo.ToString();
+        }
         if(ammoRemaining <=  0){
             anim.SetBool("firing", false);
             return;
@@ -173,10 +147,51 @@ public class WeaponController : MonoBehaviour
     void HandleMovement(){
         //TODO: Use status instead
         anim.SetBool("walking", GameManager.Player.walking);
-        anim.SetBool("sprinting", GameManager.Player.sprinting);
-        // anim.SetBool("sprinting", GameManager.Player.sprinting);
+        anim.SetFloat("walk/sprint",GameManager.Player.sprinting ? 1f : 0f, 1f, Time.deltaTime * 40f);
     }
 
+    void ControlAds(){
+        foreach(var obj in GameObject.FindGameObjectsWithTag("HideInAds")){
+            foreach(var component in obj.GetComponents<Renderer>()){
+                component.enabled = !ads;
+            }
+            foreach(var component in obj.GetComponents<MonoBehaviour>()){
+                component.enabled = !ads;
+            }
+        }
+        foreach(var obj in GameObject.FindGameObjectsWithTag("ShowInAds")){
+            foreach(var component in obj.GetComponents<Renderer>()){
+                component.enabled = ads;
+            }
+            foreach(var component in obj.GetComponents<MonoBehaviour>()){
+                component.enabled = ads;
+            }
+        }
+
+        anim.SetBool("ads",ads);
+        Tween.EaseLayerWeight(anim, "ADS", ads);
+        Tween.EaseLayerWeight(anim, "Weapon Tilt", ads, 1f, 0.25f);
+        Tween.EaseLayerWeight(anim, "Weapon Move", ads, 0.25f, 0.025f);
+    }
+
+
+    void CheckForInspect(){
+        var inspectProgress = Tween.EaseLayerWeight(anim, "Inspect", inspect);
+
+        float nearStart = 30f;
+        float nearEnd = 1f; 
+        float nearCurrent = (nearStart + (nearEnd - nearStart))*inspectProgress;
+        float near = Tween.Ease(nearCurrent,nearEnd);
+
+        float farStart = 500f;
+        float farEnd = 4f;
+        float farCurrent = (farStart + (farEnd - farStart))*inspectProgress;
+        float far = Tween.Ease(farCurrent,farEnd);
+
+        Volume volume = GameObject.Find("Post Process Volume").GetComponent<Volume>();
+        DepthOfField dof;
+        volume.profile.TryGet<DepthOfField>( out dof );
+    }
     void Update()
     {
         HandleSmoke();
@@ -187,21 +202,21 @@ public class WeaponController : MonoBehaviour
 
         Vector3 currentAngle = transform.localEulerAngles;
         Vector3 targetPos;
-        GameManager.PlayerCamera.ads = ads;
+        
         float targetAngle;
 
-        if(ads){
-            targetPos = adsPos;
-            targetAngle = 0;
-        }
-        else if(GameManager.Player.crouching){
-            targetPos = crouchPos;
-            targetAngle = 60f;
-        }
-        else{
-            targetPos = hipPos;
-            targetAngle = 0;
-        }
+        ads = reload ? false : ads;
+        GameManager.PlayerCamera.ads = ads;
+        
+       
+        targetPos = ads ? adsPos : hipPos;
+        targetAngle = 0;
+
+        ControlAds();
+
+        CheckForInspect();
+        
+
         float smoothedRotation = Mathf.SmoothDamp(currentAngle.z, targetAngle, ref velocity, Time.deltaTime * GameManager.adsSpeed);
 
         transform.localRotation = Quaternion.Lerp(Quaternion.Euler(0,0,currentAngle.z), Quaternion.Euler(0,0,targetAngle), Time.deltaTime * GameManager.adsSpeed);

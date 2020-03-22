@@ -74,11 +74,13 @@ public class GrappleController : MonoBehaviour
             rope.end = grappledObject.globalPoint;
         }
 
-        if (player.grapple)
-        {
-            rope.active = true;
-            GameManager.Audio.playShoot();
-        }
+        //THIS BREAKS SHIT
+
+        // if (player.grapple)
+        // {
+        //     rope.active = true;
+        //     GameManager.Audio.playShoot();
+        // }
 
     }
 }
