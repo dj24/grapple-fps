@@ -3,7 +3,13 @@ guid: 95d17d6ea77b33b498e7453075fa6a08
 ModelImporter:
   serializedVersion: 19300
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: LPGP_Orange_mat
+    second: {fileID: 7607437090917569898, guid: 4447d133c6dea3e48824b4f094edec98,
+      type: 3}
   materials:
     materialImportMode: 1
     materialName: 0
