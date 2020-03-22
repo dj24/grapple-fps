@@ -1,5 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.HighDefinition;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -94,19 +96,10 @@ public class WeaponController : MonoBehaviour
             Destroy (explosion, 0.5f);
             Rigidbody rb = hit.transform.gameObject.GetComponent<Rigidbody>();
             hit.transform.gameObject.GetComponentInParent<EnemyController>().TakeDamage(fwd,rb);
-        }
-        
+        }   
     }
 
-    void TiltWeapon(){
-        
-    }
-
-    void MoveWeapon(){
-        
-    }
-
-    void HandleSmoke(){
+    private void HandleSmoke(){
         if(!smoke){
             return;
         }
@@ -184,8 +177,20 @@ public class WeaponController : MonoBehaviour
 
     void CheckForInspect(){
         var inspectProgress = Tween.EaseLayerWeight(anim, "Inspect", inspect);
-        
 
+        float nearStart = 30f;
+        float nearEnd = 1f; 
+        float nearCurrent = (nearStart + (nearEnd - nearStart))*inspectProgress;
+        float near = Tween.Ease(nearCurrent,nearEnd);
+
+        float farStart = 500f;
+        float farEnd = 4f;
+        float farCurrent = (farStart + (farEnd - farStart))*inspectProgress;
+        float far = Tween.Ease(farCurrent,farEnd);
+
+        Volume volume = GameObject.Find("Post Process Volume").GetComponent<Volume>();
+        DepthOfField dof;
+        volume.profile.TryGet<DepthOfField>( out dof );
     }
     void Update()
     {
@@ -217,10 +222,5 @@ public class WeaponController : MonoBehaviour
         transform.localRotation = Quaternion.Lerp(Quaternion.Euler(0,0,currentAngle.z), Quaternion.Euler(0,0,targetAngle), Time.deltaTime * GameManager.adsSpeed);
         transform.localPosition = Vector3.Lerp(transform.localPosition, targetPos, Time.deltaTime * GameManager.adsSpeed);
         // transform.localEulerAngles = new Vector3(0, 0, smoothedRotation);
-    }
-
-    void LateUpdate(){
-        // TiltWeapon();
-        // MoveWeapon();
     }
 }
