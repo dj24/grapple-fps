@@ -31,10 +31,16 @@ public class DamageNumbers : MonoBehaviour
     // TODO: fix this initially diosplaying 0
     public void AddDamage(int damage)
     {
+        if(totalDamage == 0){
+            totalDamage = damage;
+        }
+        else{
+            totalDamage += damage;
+        }
         if(anim != null){
             anim.SetTrigger("Damage");
         }
-        totalDamage += damage;
+        
     }
 
     public void Remove()

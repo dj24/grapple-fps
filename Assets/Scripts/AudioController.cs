@@ -5,8 +5,9 @@ using UnityEngine;
 public class AudioController : MonoBehaviour
 {
     public AudioClip jumpSound;
-    public AudioClip shootSound;
     public AudioClip groundSound;
+    public AudioClip walkingSound;
+    public AudioClip sprintingSound;
     public AudioClip stepSound;
     public AudioSource source;
     public AudioClip impactSound;
@@ -24,10 +25,11 @@ public class AudioController : MonoBehaviour
 
     void playLoopingSound(AudioClip clip)
     {
+        source.loop = true;
         if (!source.isPlaying)
         {
-            source.loop = true;
-            playSound(clip);
+            source.clip = clip;
+            source.Play();
         }
     }
 
@@ -40,12 +42,6 @@ public class AudioController : MonoBehaviour
     {
         playSound(stepSound);
     }
-
-    public void playShoot()
-    {
-        playSound(shootSound);
-    }
-
     public void playHit()
     {
         playSound(impactSound);
@@ -58,8 +54,14 @@ public class AudioController : MonoBehaviour
 
     public void playWalkSound()
     {
-        // playLoopingSound(walkingSound);
+        playLoopingSound(walkingSound);
     }
+
+    public void playSprintSound()
+    {
+        playLoopingSound(sprintingSound);
+    }
+
 
     public void stopLooping(){
         source.loop = false;

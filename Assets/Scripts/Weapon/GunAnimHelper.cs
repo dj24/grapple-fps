@@ -25,7 +25,6 @@ public class GunAnimHelper : MonoBehaviour
     public void muzzleFlash(){
         if(flash != null) flash.Play();
         //THIS BREAKS THE BUILD (Only custom filters can be played)
-        // if(audio != null) audio.Play();
         if(GetComponent<Light>() != null) StartCoroutine(ToggleLight());
         GameManager.CurrentWeapon.Fire();
         GameManager.CurrentWeapon.bulletsFired++;

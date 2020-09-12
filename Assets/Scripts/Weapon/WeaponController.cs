@@ -1,13 +1,13 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine.Rendering;
-using UnityEngine.Rendering.HighDefinition;
+﻿using System; 
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
+using UnityEngine.Rendering;
+using System.Collections.Generic;
+using UnityEngine.Rendering.HighDefinition;
 
 public class WeaponController : MonoBehaviour
 {
-
     [HideInInspector]
     public Animator anim;
     [HideInInspector]
@@ -23,11 +23,10 @@ public class WeaponController : MonoBehaviour
     Text ammoCounter;
     [HideInInspector]
     public AudioSource source;
-    public AudioClip magOutSound, magInSound;
+    public AudioClip magOutSound, magInSound, fireSound;
     public GameObject explosionPrefab;
-
     private float velocity = 0;
-
+    GameObject[] showInInspect;
     void playSound(AudioClip clip)
     {
         source.loop = false;
@@ -42,6 +41,11 @@ public class WeaponController : MonoBehaviour
     public void playMagIn()
     {
         playSound(magInSound);
+    }
+
+    public void playFire()
+    {
+        playSound(fireSound);
     }
 
     private IEnumerator smokeCoroutine()
@@ -60,6 +64,7 @@ public class WeaponController : MonoBehaviour
         }
         ammoRemaining = ammoCapacity;
         source = gameObject.GetComponent<AudioSource>();
+        fireSound = source.clip;
         bulletsFired = 0;
         hipPos = transform.localPosition;
         adsPos = new Vector3(0,-0.095f,0.8f);
@@ -69,12 +74,15 @@ public class WeaponController : MonoBehaviour
             return;
         }
         smoke.Stop();
+        showInInspect = GameObject.FindGameObjectsWithTag("ShowInInspect");
     }
 
     public void Fire()
     {
         if(ammoRemaining <= 0) return;
         ammoRemaining --;
+
+        playFire();
 
         GameObject spawn =  GameObject.FindWithTag("Bullet Spawn");
         if(spawn){
@@ -151,12 +159,13 @@ public class WeaponController : MonoBehaviour
     }
 
     void ControlAds(){
+        GameManager.DebugText.text = inspect.ToString();
         foreach(var obj in GameObject.FindGameObjectsWithTag("HideInAds")){
             foreach(var component in obj.GetComponents<Renderer>()){
-                component.enabled = !ads;
+                component.enabled = !ads && !inspect;
             }
             foreach(var component in obj.GetComponents<MonoBehaviour>()){
-                component.enabled = !ads;
+                component.enabled = !ads && !inspect;
             }
         }
         foreach(var obj in GameObject.FindGameObjectsWithTag("ShowInAds")){
@@ -174,23 +183,25 @@ public class WeaponController : MonoBehaviour
         Tween.EaseLayerWeight(anim, "Weapon Move", ads, 0.25f, 0.025f);
     }
 
-
     void CheckForInspect(){
+        foreach(var obj in showInInspect){
+            obj.SetActive(inspect);
+        }
+
+        Cursor.lockState = inspect ? CursorLockMode.None : CursorLockMode.Locked;
+        Cursor.visible = inspect;
+
         var inspectProgress = Tween.EaseLayerWeight(anim, "Inspect", inspect);
 
-        float nearStart = 30f;
-        float nearEnd = 1f; 
-        float nearCurrent = (nearStart + (nearEnd - nearStart))*inspectProgress;
-        float near = Tween.Ease(nearCurrent,nearEnd);
-
-        float farStart = 500f;
-        float farEnd = 4f;
-        float farCurrent = (farStart + (farEnd - farStart))*inspectProgress;
-        float far = Tween.Ease(farCurrent,farEnd);
-
-        Volume volume = GameObject.Find("Post Process Volume").GetComponent<Volume>();
         DepthOfField dof;
-        volume.profile.TryGet<DepthOfField>( out dof );
+        GameManager.PostProcess.profile.TryGet<DepthOfField>( out dof );
+
+        dof.farFocusEnd.value = Tween.Lerp(500f, 2f, inspectProgress);
+        dof.farFocusStart.value = Tween.Lerp(30f, 1f, inspectProgress);
+
+        float timeScale = Tween.Lerp(1f, 0.01f, (float)Math.Pow(inspectProgress,7));
+        Time.timeScale = timeScale;
+        Time.fixedDeltaTime = timeScale * 0.02f;
     }
     void Update()
     {
@@ -215,7 +226,6 @@ public class WeaponController : MonoBehaviour
         ControlAds();
 
         CheckForInspect();
-        
 
         float smoothedRotation = Mathf.SmoothDamp(currentAngle.z, targetAngle, ref velocity, Time.deltaTime * GameManager.adsSpeed);
 

@@ -5,7 +5,7 @@ using UnityEngine;
 public class CameraController : MonoBehaviour
 {
     Camera cam;
-    float originalFov, adsFov = 40;
+    float originalFov, adsFov = 30;
     public bool ads = false;
     void Start()
     {

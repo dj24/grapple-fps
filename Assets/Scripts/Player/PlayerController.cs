@@ -11,6 +11,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField]
     bool isGrounded;
     public bool walking, sprinting;
+    bool lastWalking, lastSprinting;
     public Vector3 yRotation,xRotation;
     CharacterController characterController;
 
@@ -90,6 +91,20 @@ public class PlayerController : MonoBehaviour
         RotateCamera();
 
         sprinting = GameManager.Input.sprinting;
+        if(sprinting && !lastSprinting){
+            Camera.main.GetComponent<AudioController>().stopLooping();
+            Camera.main.GetComponent<AudioController>().playSprintSound();
+        }
+        else if(walking && !lastWalking || !sprinting && lastSprinting ){
+            Camera.main.GetComponent<AudioController>().stopLooping();
+            Camera.main.GetComponent<AudioController>().playWalkSound();
+        }
+        else if(!walking && lastWalking){
+            Camera.main.GetComponent<AudioController>().stopLooping();
+        }
+        lastSprinting = sprinting;
+        lastWalking = walking;
+        
 
         GroundCheck();
 
@@ -103,6 +118,6 @@ public class PlayerController : MonoBehaviour
 
         Debug.DrawRay(transform.TransformPoint(characterController.center), Vector3.down , Color.red);
 
-        GameManager.DebugText.text = moveDirection.ToString();
+        // GameManager.DebugText.text = moveDirection.ToString();
     }
 }

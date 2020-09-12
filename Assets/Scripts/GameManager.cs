@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.HighDefinition;
 
 public class GameManager : MonoBehaviour
 {
@@ -71,6 +73,14 @@ public class GameManager : MonoBehaviour
 		get
 		{
 			return GameManager.Player.GetComponentInChildren<WeaponController>();
+		}
+	}
+
+	public static Volume PostProcess
+	{
+		get
+		{
+			return GameObject.Find("Post Process Volume").GetComponent<Volume>();
 		}
 	}
 

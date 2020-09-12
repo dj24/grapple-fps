@@ -11,7 +11,10 @@ TagManager:
   - Bullet Spawn
   - Head
   - DamageNumber
-  - FlexiRope
+  - AmmoCount
+  - HideInAds
+  - ShowInAds
+  - ShowInInspect
   layers:
   - Default
   - TransparentFX
@@ -24,7 +27,7 @@ TagManager:
   - PostProcessing
   - Ground
   - Enemy
-  - 
+  - Gun
   - 
   - 
   - 

@@ -7,7 +7,7 @@ public class InputHandler : MonoBehaviour
     WeaponController weapon;
 
     public float forward, right;
-    public bool jump, sprinting, crouching;
+    public bool jump, sprinting, crouching, inspect;
 
     private void Start()
     {
@@ -18,6 +18,18 @@ public class InputHandler : MonoBehaviour
 
     void Update()
     {
+        inspect = Input.GetKeyDown(KeyCode.Tab);
+        if(inspect){
+           weapon.inspect = !weapon.inspect;
+        }
+        if(weapon.inspect){
+            forward = 0;
+            right = 0;
+            player.yRotation = Vector3.zero;
+            player.xRotation =Vector3.zero;
+            return;
+        } 
+        
         forward = Input.GetAxis("Vertical");
         right = Input.GetAxis("Horizontal");
         weapon.anim.SetFloat("xMove",right, 1f, Time.deltaTime * 50f);
@@ -35,9 +47,7 @@ public class InputHandler : MonoBehaviour
         rope.active = Input.GetKey(KeyCode.Q);
         weapon.firing = Input.GetMouseButton(0);
         weapon.ads = Input.GetMouseButton(1);
-       if(Input.GetKeyDown(KeyCode.Tab)){
-           weapon.inspect = !weapon.inspect;
-       }
+        
         if(Input.GetKeyDown(KeyCode.R)){
             weapon.StartReload();
         }

@@ -4,8 +4,16 @@ using UnityEngine;
 
 public static class Tween
 {
+    private static float Round(float value){
+        return Mathf.Round(value * 1000f) / 1000f;
+    }
+
     public static float Ease(float current, float target){
-        return Mathf.Lerp(current, target, Time.deltaTime * GameManager.adsSpeed);
+        return Tween.Round(Mathf.Lerp(current, target, Time.deltaTime * GameManager.adsSpeed));
+    }
+
+    public static float Lerp(float start, float end, float progress){
+        return Tween.Round(start + (end - start) * progress);
     }
     
     public static float EaseLayerWeight(Animator anim, string layerName, bool enabled){
