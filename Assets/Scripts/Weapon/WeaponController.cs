@@ -159,7 +159,6 @@ public class WeaponController : MonoBehaviour
     }
 
     void ControlAds(){
-        GameManager.DebugText.text = inspect.ToString();
         foreach(var obj in GameObject.FindGameObjectsWithTag("HideInAds")){
             foreach(var component in obj.GetComponents<Renderer>()){
                 component.enabled = !ads && !inspect;

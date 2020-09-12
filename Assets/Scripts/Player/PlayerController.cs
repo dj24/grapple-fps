@@ -16,6 +16,7 @@ public class PlayerController : MonoBehaviour
     CharacterController characterController;
 
     public float speed;
+    RaycastHit hit;
     public float jumpSpeed;
     public float turnSpeed;
     public float gravity;
@@ -59,14 +60,16 @@ public class PlayerController : MonoBehaviour
             else{
                 walking = false;
             }
-            moveDirection = (transform.right * GameManager.Input.right + transform.forward * GameManager.Input.forward) * speed; 
+            Vector3 fwd = -Vector3.Cross(hit.normal, transform.right).normalized * GameManager.Input.forward;
+            Vector3 right = Vector3.Cross(hit.normal, transform.forward).normalized * GameManager.Input.right;
+            moveDirection = (fwd + right) * speed;
         }
     }
 
     void GroundCheck(){
-        RaycastHit hit;
         bool groundCheck = Physics.Raycast(transform.TransformPoint(characterController.center), Vector3.down, out hit,characterController.height/2, 1 << LayerMask.NameToLayer("Ground"));
         if(!isGrounded && groundCheck){
+            // ADD AIR TIMER
             GameManager.CurrentWeapon.anim.SetTrigger("land");
         }
         isGrounded = groundCheck;
@@ -119,5 +122,10 @@ public class PlayerController : MonoBehaviour
         Debug.DrawRay(transform.TransformPoint(characterController.center), Vector3.down , Color.red);
 
         // GameManager.DebugText.text = moveDirection.ToString();
+
+        // GameManager.DebugText.text = characterController.velocity.magnitude.ToString();
+        // Debug.DrawRay(transform.position,, Color.green);
+        // Debug.DrawRay(transform.position, transform.forward, Color.green);
+        print(hit.normal);
     }
 }
